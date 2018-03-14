@@ -1,0 +1,77 @@
+#服务名称
+spring:
+  application:
+    name: api-gateway
+  redis:
+    cluster:
+      nodes: 192.168.30.210:6379,192.168.30.210:6380,192.168.30.210:6381,192.168.30.210:6382,192.168.30.210:6383,192.168.30.210:6384
+      maxRedirects: 5
+  shiro:
+    rememberMeCookieMaxAge: 300
+    sessionIdCookieMaxAge: 2000
+    sessionTimeout: 3600
+    cacheTimeout: 60
+
+#服务端口
+server:
+  port: 5555
+
+#服务发现中心地址
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://peer1:1111/eureka/,http://peer2:1112/eureka/
+
+#网关配置
+zuul:
+  host:
+    max-per-route-connections: 100 #单个路由最大连接数
+    max-total-connections: 1000     #单个路由可以使用的最大连接数
+    connect-timeout-millis: 2000  #连接超时时间，单位毫秒
+    socket-timeout-millis: 10000  #socket超时时间，单位毫秒
+  #动态过滤器
+#  SendResponseFilter:
+#    post:
+#      disable: true
+  filter:
+    root: filter-repository
+    interval: 5
+  ## 忽略的路径，返回404
+  ignored-patterns: /**/hello/
+  ## 忽略的服务，不为他自动创建路由映射
+  ignored-services: eureka-server,api-gateway,config-server
+  ## 如果 ribbon.ConnectTimeout/ReadTimeout < hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds 的时候，连接超时，会自动重试路由请求，如果要禁用设置retryable为false
+  retryable: false
+  add-host-header: true
+  routes:
+    api-a:
+      path: /api-a/**
+      serviceId: pay-service
+      ## 重定向
+#      url: http://localhost:8081/
+      ## 网关默认不会传递Header中的Cookie, Set-Cookie, Authorization三个属性，可通过以下两个属性两开放
+      sensitiveHeaders:
+      customSensitiveHeaders: true
+
+## 客户端负载配置
+ribbon:
+  ConnectTimeout: 3000
+  ReadTimeout: 60000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+
+## 容错熔断配置
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: false
+
+## 安全配置
+security:
+  basic:
+    enabled: false
+  user:
+    name: dog
+    password: please
